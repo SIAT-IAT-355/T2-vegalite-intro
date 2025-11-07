@@ -11,10 +11,6 @@ async function render() {
     data: { values: data },
     width: "container",
     height: 400,
-    encoding: {
-      y: { field: "Platform", type: "nominal", sort: "-x" },
-      x: { field: "Global_Sales", type: "quantitative", aggregate: "mean" },
-    },
     layer: [
       {
         // Bar layer
@@ -26,6 +22,9 @@ async function render() {
           },
         ],
         encoding: {
+          // move the bar encodings here so the rule layer doesn't inherit them
+          y: { field: "Platform", type: "nominal", sort: "-x" },
+          x: { field: "Global_Sales", type: "quantitative", aggregate: "mean" },
           opacity: {
             condition: {
               param: "brush",
@@ -37,10 +36,19 @@ async function render() {
         },
       },
       {
-        transform: [{ filter: { param: "brush" } }],
-        mark: "rule",
+        // Aggregate the filtered (brushed) data into a single mean value
+        transform: [
+          { filter: { param: "brush" } },
+          {
+            aggregate: [
+              { op: "mean", field: "Global_Sales", as: "mean_sales" },
+            ],
+          },
+        ],
+        mark: { type: "rule", orient: "vertical" },
         encoding: {
-          y: { field: "Global_Sales", type: "quantitative", aggregate: "mean" },
+          // use the aggregated mean_sales value (single value) for x
+          x: { field: "mean_sales", type: "quantitative" },
           color: {
             condition: {
               param: "brush",
